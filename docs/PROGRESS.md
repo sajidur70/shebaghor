@@ -36,11 +36,21 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Added a starter `README.md` (work-in-progress; live link, screenshots and setup steps come on Day 7)
 - [x] **1.3** First commit `edb7005` pushed to GitHub
 
+### 2026-10-20 — server setup started
+- [x] Ran `npm init` in `server/` and installed `express`, `cors`, `helmet`, `morgan`, `zod`, `dotenv`
+- [x] `server/package.json` now matches the guide: `"type": "module"`, Node `>=22`, scripts `dev` / `start` / `build` / `db:seed` / `test`, entry point `src/index.js`
+- [x] Installed Prisma **6.19.3** (`@prisma/client` + `-D prisma`) and ran `npx prisma init`
+- [x] Switched `prisma init`'s new-style output back to the classic Prisma 6 setup: deleted `prisma.config.ts`, generator `prisma-client-js`, `url` + `directUrl` in `schema.prisma`
+- [x] **Day 1, Step 2:** Neon pooled URL (+ `&pgbouncer=true`) as `DATABASE_URL` and direct URL as `DIRECT_URL` in `server/.env`; `server/.env.example` has the names only
+- [x] Checked: `npx prisma validate` passes, `npx prisma migrate status` connects to `neondb` in Singapore (empty, no migrations yet: expected)
+- [x] VS Code: pinned the Prisma extension to Prisma 6 (`.vscode/settings.json`) so it stops flagging `url` / `directUrl`
+
 ## Next
 
-- [ ] **Day 1, Step 2:** In Neon → **Connect** → copy the **pooled** URL (host has `-pooler`, add `&pgbouncer=true`) as `DATABASE_URL`, and the **direct** URL as `DIRECT_URL`
-- [ ] Day 1, Steps 3–5: Express server, env validation, error handling
+- [ ] Commit the server setup (`package.json`, lock file, `schema.prisma`, `.env.example`, `.gitignore`, `.vscode/settings.json`, PROGRESS.md); `.env` must not be in it
+- [ ] Day 1, Steps 3–5: Express server (`src/index.js`), env validation, error handling
 - [ ] Then Prisma schema + first migration (see `database/PRISMA_SCHEMA.md` in the docs repo; leave out `Review` until Day 6)
+- [ ] Make `shebaghor-docs` public (or clone it to `C:\dev\shebaghor-docs`) so Claude can check steps against the guide; it's private right now
 
 ## Decisions and why
 
@@ -53,10 +63,21 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | `Booking.price` is a snapshot | Later price changes must not rewrite what the customer agreed to and paid (BR-5) |
 | `ProviderProfile` separate from `User` | Provider-only fields (area, bio, approved, rating) don't belong on every customer row |
 | Ignore `node_modules`, `.env`, `dist` | Reinstallable with `npm install`; `.env` holds secrets; `dist` is build output. Commit `.env.example` instead |
+| ES modules (`"type": "module"`) | The guide's code uses `import` / `export`, the modern standard |
+| `node --watch` instead of `nodemon` | Built into Node 22+, so one less package to install |
+| Prisma **6**, not the newest | Prisma 7+ moved the database URLs out of `schema.prisma` into a separate config file; the guide's schema uses `url` + `directUrl` in the schema, which is the Prisma 6 way |
+| Removed `prisma.config.ts`, used `prisma-client-js` | `prisma init` (6.19) creates a newer TypeScript-style setup; plain JS + the guide's `import { PrismaClient } from "@prisma/client"` need the classic one |
+| Pin the VS Code Prisma extension to Prisma 6 | The extension follows Prisma 7+ rules and shows `url` / `directUrl` as errors; the CLI (`prisma validate`) is what my project actually runs |
+| Ignore "Update available: `@prisma/client@latest`" | Latest is Prisma 8; upgrading would break the plan's schema setup |
+| I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
 
 ## Things I learned (interview notes)
 
 - **Price snapshot:** a booking is a record of a past deal, like a shop receipt; it must not change when the price changes.
 - **One-to-one table split:** shared login data in `User`, role-specific data in `ProviderProfile` linked by a unique `userId`.
 - **Connection pooling:** Neon gives a pooled URL (PgBouncer) for the app and a direct URL for Prisma migrations.
+- **`dependencies` vs `devDependencies`:** `@prisma/client` runs inside the live app, so it's a normal dependency; the `prisma` CLI is only used while building (migrations, generate), so it's `-D`.
+- **`npm start` vs `npm run dev`:** `dev` restarts on every save (for me while coding); `start` runs once (what Render uses).
+- **`url` vs `directUrl`:** the app's many short queries go through the pooler (like a call-centre receptionist sharing a few staff); migrations need one connection from start to finish, so they use the direct URL.
+- **"Not managed by Prisma Migrate":** normal on an empty database before the first migration; *baselining* is only for databases that already have tables made without Prisma.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
