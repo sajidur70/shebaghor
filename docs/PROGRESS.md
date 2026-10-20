@@ -45,12 +45,19 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Checked: `npx prisma validate` passes, `npx prisma migrate status` connects to `neondb` in Singapore (empty, no migrations yet: expected)
 - [x] VS Code: pinned the Prisma extension to Prisma 6 (`.vscode/settings.json`) so it stops flagging `url` / `directUrl`
 
+### 2026-10-20 — Day 1, Steps 3–5: Express server
+- [x] **3.3** Folders: `src/config`, `src/middleware`, `src/routes`, `src/services`, `src/utils`, `test`, `scripts`
+- [x] **4.1–4.3** JWT secret generated; `.env.example` has all variable names with fake values; real `.env` has all 10 variables (added by hand, not `Copy-Item`, so the Neon URLs weren't overwritten)
+- [x] **4.4** `src/config/env.js` checks the env variables with zod when the server starts
+- [x] **5.1–5.4** `httpError.js`, `middleware/error.js`, `app.js`, `index.js`
+- [x] **5.5** Checked: `/api/health` → `{"ok":true,...}` with helmet headers and CORS for `http://localhost:5173`; `/api/nope` → 404 `{"error":"Route not found"}`
+
 ## Next
 
-- [ ] Commit the server setup (`package.json`, lock file, `schema.prisma`, `.env.example`, `.gitignore`, `.vscode/settings.json`, PROGRESS.md); `.env` must not be in it
-- [ ] Day 1, Steps 3–5: Express server (`src/index.js`), env validation, error handling
-- [ ] Then Prisma schema + first migration (see `database/PRISMA_SCHEMA.md` in the docs repo; leave out `Review` until Day 6)
-- [ ] Make `shebaghor-docs` public (or clone it to `C:\dev\shebaghor-docs`) so Claude can check steps against the guide; it's private right now
+- [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
+- [ ] Day 1, Step 5.5 last check: rename `JWT_SECRET` → `JWT_SECRETX`, see the ❌ error, rename back; then commit
+- [ ] Day 1, Step 6: Prisma schema (6.1 install is already done) → Step 7: first migration + `src/db.js` + finish `index.js` (leave out `Review` until Day 6)
+- [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
 
