@@ -62,6 +62,11 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] **7.2** Saw the tables in `npx prisma studio` and in Neon (Tables page; also `_prisma_migrations`, Prisma's record of applied migrations)
 - [x] **7.3** `src/db.js`: one shared `PrismaClient` for the whole app
 - [x] **7.4** `src/index.js` runs `await prisma.$connect()` before `app.listen`; checked: prints `✅ Postgres connected` then `🚀 API running`, `/api/health` → 200
+- [x] Committed and pushed Steps 6–7: `d30e579`
+
+### 2026-10-20 — Day 1, Step 8: seed demo data
+- [x] Installed `bcryptjs` (pure JS, so no native build on Windows); `prisma/seed.js` typed from the guide
+- [x] `npm run db:seed` run twice (safe to repeat: it wipes children first). Checked in Neon: 7 users (1 admin, 1 customer, 5 providers), 5 provider profiles (4 approved, `pending@` not), 4 categories, 6 services, 30 availability rows; demo hash starts `$2b$10$` and `password123` matches
 
 ## Next
 
@@ -69,8 +74,8 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Steps 3–5 committed and pushed: `d9e5212`
 - [ ] Day 1, Step 5.5 last check (if not done yet): rename `JWT_SECRET` → `JWT_SECRETX`, see the ❌ error, rename back
 - [x] Day 1, Step 6: Prisma schema (not migrated yet)
-- [ ] Commit Step 6–7 (`feat: prisma schema and init migration on neon`), including `prisma/migrations`, and push
-- [ ] Day 1, Step 8: seed demo data (`prisma/seed.js`)
+- [ ] Commit Step 8 (`feat: seed script with demo users, providers and services`) and push
+- [ ] Day 1, Step 9: React app (Vite + Tailwind + shadcn/ui) in `client/`
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
