@@ -52,11 +52,25 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] **5.1–5.4** `httpError.js`, `middleware/error.js`, `app.js`, `index.js`
 - [x] **5.5** Checked: `/api/health` → `{"ok":true,...}` with helmet headers and CORS for `http://localhost:5173`; `/api/nope` → 404 `{"error":"Route not found"}`
 
+### 2026-10-20 — Day 1, Step 6: Prisma schema
+- [x] **6.2** Typed the full schema in `prisma/schema.prisma`: 3 enums (`Role`, `BookingStatus`, `PaymentStatus`) + 7 models (`User`, `ProviderProfile`, `Category`, `Service`, `Availability`, `Booking`, `Payment`). `Review` left out on purpose (Day 6, second migration)
+- [x] `npx prisma format` + `npx prisma validate` pass; checked line by line against the guide (no differences)
+
+### 2026-10-20 — Day 1, Step 7: first migration
+- [x] Fixed `P1013: scheme is not recognized`: `DIRECT_URL` in `.env` had an opening `"` but no closing one, so the quote became part of the URL
+- [x] **7.1** `npx prisma migrate dev --name init` → `prisma/migrations/20261020043151_init/migration.sql` (3 enum types, 7 tables, 10 indexes, 8 foreign keys); `migrate status` says "Database schema is up to date!"
+- [x] **7.2** Saw the tables in `npx prisma studio` and in Neon (Tables page; also `_prisma_migrations`, Prisma's record of applied migrations)
+- [x] **7.3** `src/db.js`: one shared `PrismaClient` for the whole app
+- [x] **7.4** `src/index.js` runs `await prisma.$connect()` before `app.listen`; checked: prints `✅ Postgres connected` then `🚀 API running`, `/api/health` → 200
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
-- [ ] Day 1, Step 5.5 last check: rename `JWT_SECRET` → `JWT_SECRETX`, see the ❌ error, rename back; then commit
-- [ ] Day 1, Step 6: Prisma schema (6.1 install is already done) → Step 7: first migration + `src/db.js` + finish `index.js` (leave out `Review` until Day 6)
+- [x] Steps 3–5 committed and pushed: `d9e5212`
+- [ ] Day 1, Step 5.5 last check (if not done yet): rename `JWT_SECRET` → `JWT_SECRETX`, see the ❌ error, rename back
+- [x] Day 1, Step 6: Prisma schema (not migrated yet)
+- [ ] Commit Step 6–7 (`feat: prisma schema and init migration on neon`), including `prisma/migrations`, and push
+- [ ] Day 1, Step 8: seed demo data (`prisma/seed.js`)
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -87,4 +101,5 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **`npm start` vs `npm run dev`:** `dev` restarts on every save (for me while coding); `start` runs once (what Render uses).
 - **`url` vs `directUrl`:** the app's many short queries go through the pooler (like a call-centre receptionist sharing a few staff); migrations need one connection from start to finish, so they use the direct URL.
 - **"Not managed by Prisma Migrate":** normal on an empty database before the first migration; *baselining* is only for databases that already have tables made without Prisma.
+- **`.env` quotes:** a missing closing `"` doesn't cause a "syntax error", it silently becomes part of the value. `prisma validate` doesn't read the URL, so only `migrate` caught it.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.

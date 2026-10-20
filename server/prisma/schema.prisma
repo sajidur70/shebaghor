@@ -1,15 +1,123 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url       = env("DATABASE_URL") // pooled, used by the app
+  directUrl = env("DIRECT_URL") // direct, used by migrations
+}
+
+enum Role {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PAID
+  FAILED
+}
+
+model User {
+  id           String           @id @default(cuid())
+  name         String
+  email        String           @unique
+  passwordHash String
+  phone        String?
+  role         Role             @default(CUSTOMER)
+  createdAt    DateTime         @default(now())
+  provider     ProviderProfile? // only for role = PROVIDER
+  bookings     Booking[] // bookings this user made as a customer
+}
+
+model ProviderProfile {
+  id           String         @id @default(cuid())
+  userId       String         @unique // @unique makes it one-to-one with User
+  user         User           @relation(fields: [userId], references: [id])
+  area         String
+  bio          String?
+  approved     Boolean        @default(false) // admin must approve (BR-1)
+  ratingAvg    Float          @default(0) // denormalized for fast search cards
+  ratingCount  Int            @default(0)
+  services     Service[]
+  availability Availability[]
+  bookings     Booking[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique // "ac-technician", used in URLs
+  services Service[]
+}
+
+model Service {
+  id          String          @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id])
+  categoryId  String
+  category    Category        @relation(fields: [categoryId], references: [id])
+  title       String
+  description String
+  price       Int // whole taka (৳500 = 500). Int avoids float rounding with money
+  durationMin Int // 30, 60, 90 ...
+  area        String
+  active      Boolean         @default(true) // soft delete (BR-9)
+  createdAt   DateTime        @default(now())
+  bookings    Booking[]
+
+  @@index([categoryId, active])
+}
+
+model Availability {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  weekday    Int // 0 = Sunday ... 5 = Friday, 6 = Saturday
+  startMin   Int // minutes since midnight Dhaka time: 09:00 = 540
+  endMin     Int // 18:00 = 1080
+
+  @@unique([providerId, weekday]) // one working window per weekday
+}
+
+model Booking {
+  id         String          @id @default(cuid())
+  customerId String
+  customer   User            @relation(fields: [customerId], references: [id])
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  serviceId  String
+  service    Service         @relation(fields: [serviceId], references: [id])
+  startAt    DateTime // stored in UTC
+  endAt      DateTime // stored in UTC
+  price      Int // snapshot of Service.price at booking time (BR-5)
+  address    String
+  status     BookingStatus   @default(PENDING_PAYMENT)
+  createdAt  DateTime        @default(now()) // used for the 15-minute payment hold
+  payment    Payment?
+
+  @@index([providerId, startAt]) // fast overlap checks
+  @@index([customerId])
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
+  booking        Booking       @relation(fields: [bookingId], references: [id])
+  tranId         String        @unique // our transaction id sent to SSLCommerz
+  amount         Int
+  status         PaymentStatus @default(INITIATED)
+  valId          String? // SSLCommerz validation id
+  refundRequired Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
