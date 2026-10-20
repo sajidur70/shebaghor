@@ -84,7 +84,8 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Day 1, Step 6: Prisma schema (not migrated yet)
 - [x] Commit Step 8 (`feat: seed script with demo users, providers and services`): `f16548e`
 - [x] Day 1, Step 9: React app (Vite + Tailwind + shadcn/ui) in `client/`
-- [ ] Confirm in the browser: server + client running, http://localhost:5173 shows "✅ API is up" in a teal-themed card
+- [x] Confirmed in the browser: server + client running, http://localhost:5173 shows "✅ API is up" in a shadcn card (first try said `Network Error` because the API wasn't running: two terminals needed)
+- [x] Step 9 committed and pushed: `8eb84f6`. **Day 1 complete.**
 - [ ] Day 2: authentication (`DAY-2-authentication.md`)
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
@@ -121,4 +122,5 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **`url` vs `directUrl`:** the app's many short queries go through the pooler (like a call-centre receptionist sharing a few staff); migrations need one connection from start to finish, so they use the direct URL.
 - **"Not managed by Prisma Migrate":** normal on an empty database before the first migration; *baselining* is only for databases that already have tables made without Prisma.
 - **`.env` quotes:** a missing closing `"` doesn't cause a "syntax error", it silently becomes part of the value. `prisma validate` doesn't read the URL, so only `migrate` caught it.
+- **`Network Error` in the browser:** Axios got no response at all (server not running, wrong URL, or CORS blocked it). If the server answers with an error, you see its `{ error }` message instead.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
