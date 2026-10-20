@@ -68,14 +68,24 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Installed `bcryptjs` (pure JS, so no native build on Windows); `prisma/seed.js` typed from the guide
 - [x] `npm run db:seed` run twice (safe to repeat: it wipes children first). Checked in Neon: 7 users (1 admin, 1 customer, 5 providers), 5 provider profiles (4 approved, `pending@` not), 4 categories, 6 services, 30 availability rows; demo hash starts `$2b$10$` and `password123` matches
 
+### 2026-10-21 — Day 1, Step 9: React app
+- [x] **9.1** `client/` created with Vite (React, JS); installed `react-router` (got **v8**) and `axios`
+- [x] **9.2** Removed the template's `App.css`, `src/assets`, and `public/icons.svg` (this Vite version makes `icons.svg` instead of `vite.svg`); kept `favicon.svg`
+- [x] **9.3–9.4** Tailwind via `@tailwindcss/vite`; `@/` alias in `vite.config.js` + `jsconfig.json`
+- [x] **9.5** shadcn/ui (`radix`, `nova`), `"tsx": false`, 12 components in `src/components/ui/`; `--primary` / `--ring` set to teal in `:root`
+- [x] **9.6–9.8** `client/.env` (ignored) + `.env.example` (committed) with `VITE_API_URL`; `src/api.js`; temporary health-check `App.jsx`
+- [x] Checked: `vite build` passes; `npm run lint` clean
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
 - [x] Steps 3–5 committed and pushed: `d9e5212`
 - [ ] Day 1, Step 5.5 last check (if not done yet): rename `JWT_SECRET` → `JWT_SECRETX`, see the ❌ error, rename back
 - [x] Day 1, Step 6: Prisma schema (not migrated yet)
-- [ ] Commit Step 8 (`feat: seed script with demo users, providers and services`) and push
-- [ ] Day 1, Step 9: React app (Vite + Tailwind + shadcn/ui) in `client/`
+- [x] Commit Step 8 (`feat: seed script with demo users, providers and services`): `f16548e`
+- [x] Day 1, Step 9: React app (Vite + Tailwind + shadcn/ui) in `client/`
+- [ ] Confirm in the browser: server + client running, http://localhost:5173 shows "✅ API is up" in a teal-themed card
+- [ ] Day 2: authentication (`DAY-2-authentication.md`)
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -95,6 +105,10 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | Removed `prisma.config.ts`, used `prisma-client-js` | `prisma init` (6.19) creates a newer TypeScript-style setup; plain JS + the guide's `import { PrismaClient } from "@prisma/client"` need the classic one |
 | Pin the VS Code Prisma extension to Prisma 6 | The extension follows Prisma 7+ rules and shows `url` / `directUrl` as errors; the CLI (`prisma validate`) is what my project actually runs |
 | Ignore "Update available: `@prisma/client@latest`" | Latest is Prisma 8; upgrading would break the plan's schema setup |
+| Keep react-router **8** (guide says v7) | Checked: every name the guide imports (`BrowserRouter`, `Routes`, `Link`, `useNavigate`, …) still exists in v8 |
+| No `baseUrl` in `client/jsconfig.json` | TypeScript 6 (inside VS Code) deprecates it; `paths` alone works, and the shadcn CLI still finds `@/` |
+| Components import `cn` from the `cn` package | Newer shadcn uses its own `cn` package instead of `clsx` + `tailwind-merge`; `@/lib/utils` re-exports it |
+| ESLint ignores `src/components/ui` | shadcn's generated files trip the Vite lint rules (unused `React` import); my own code is still checked |
 | I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
 
 ## Things I learned (interview notes)
