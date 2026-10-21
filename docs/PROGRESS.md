@@ -76,6 +76,13 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] **9.6–9.8** `client/.env` (ignored) + `.env.example` (committed) with `VITE_API_URL`; `src/api.js`; temporary health-check `App.jsx`
 - [x] Checked: `vite build` passes; `npm run lint` clean
 
+### 2026-10-21 — Day 2, Steps 1–4: auth API
+- [x] **1** Installed `jsonwebtoken` and `express-rate-limit`
+- [x] **2** `src/middleware/auth.js`: `requireAuth` (401 if no valid token, sets `req.user = { id, role }`) and `requireRole(...roles)` (403)
+- [x] **3** `src/routes/auth.js`: `POST /register`, `POST /login` (both rate-limited, 20 per 15 min), `GET /me`; mounted at `/api/auth` in `app.js`
+- [x] **4** Tested: login 200 + token; wrong password and unknown email both 401 with the same message; provider without area 400; `role: "ADMIN"` 400; `/me` without token 401, with token 200 (no `passwordHash`), with a changed token 401; `test1@mail.com` registered, stored hash starts `$2b$10$`
+- [x] Committed: `bb8e454`
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -86,7 +93,10 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Day 1, Step 9: React app (Vite + Tailwind + shadcn/ui) in `client/`
 - [x] Confirmed in the browser: server + client running, http://localhost:5173 shows "✅ API is up" in a shadcn card (first try said `Network Error` because the API wasn't running: two terminals needed)
 - [x] Step 9 committed and pushed: `8eb84f6`. **Day 1 complete.**
-- [ ] Day 2: authentication (`DAY-2-authentication.md`)
+- [x] Day 2, Steps 1–4: auth API (`bb8e454`)
+- [ ] Day 2, Step 4 leftovers: register `test1@mail.com` again → 409; wrong password ~21 times → 429 (restart the server after)
+- [ ] Day 2, Step 5: `api.js` interceptor + `AuthContext.jsx`
+- [ ] Day 2, Step 6: router, Navbar, Login, Register, RequireRole
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -110,6 +120,7 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | No `baseUrl` in `client/jsconfig.json` | TypeScript 6 (inside VS Code) deprecates it; `paths` alone works, and the shadcn CLI still finds `@/` |
 | Components import `cn` from the `cn` package | Newer shadcn uses its own `cn` package instead of `clsx` + `tailwind-merge`; `@/lib/utils` re-exports it |
 | ESLint ignores `src/components/ui` | shadcn's generated files trip the Vite lint rules (unused `React` import); my own code is still checked |
+| Keep Thunder Client 3.0 for API tests | Its sidebar button has two parts: **New Request** makes a normal HTTP request; the ▼ arrow next to it makes SSE / WebSocket / gRPC requests (a tab with a **Connect** button and an empty answer) |
 | I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
 
 ## Things I learned (interview notes)
@@ -123,4 +134,6 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **"Not managed by Prisma Migrate":** normal on an empty database before the first migration; *baselining* is only for databases that already have tables made without Prisma.
 - **`.env` quotes:** a missing closing `"` doesn't cause a "syntax error", it silently becomes part of the value. `prisma validate` doesn't read the URL, so only `migrate` caught it.
 - **`Network Error` in the browser:** Axios got no response at all (server not running, wrong URL, or CORS blocked it). If the server answers with an error, you see its `{ error }` message instead.
+- **Bearer token:** the login answer's `token` is like a cinema ticket. I show it on later requests as `Authorization: Bearer <token>`; the server checks the signature with `JWT_SECRET`, so a changed token gets 401.
+- **401 vs 403:** 401 = "who are you?" (no or bad token); 403 = "I know you, but you're not allowed" (wrong role).
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
