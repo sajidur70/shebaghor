@@ -105,6 +105,13 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Checked: `npm run lint` clean, `vite build` passes, code matches the guide
 - [x] Committed and pushed
 
+### 2026-10-22 — Day 4, Steps 1–3: time helpers, slot calculator, unit tests
+- [x] **1** `src/utils/time.js`: `dhakaToUtc`, `utcToDhaka`, `weekdayOf`, `addMinutes`, `isValidDateStr` (UTC methods only, so laptop and Render agree)
+- [x] **2.1** `src/utils/slots.js`: `overlaps` + pure `getFreeSlots` (`now` passed in, no database)
+- [x] **2.2** `src/utils/blocking.js`: `blockingBookingWhere` (Prisma `where` fragment) + `isHoldActive`, 15-minute payment hold
+- [x] **3** `test/slots.test.js`: `npm test` → pass 11, fail 0
+- [ ] "Prove the tests catch bugs" (`aEnd > bStart` → `>=`, see the touching test fail, change back), then commit
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -124,7 +131,7 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Day 3, Steps 4–5: Home page + provider dashboard (code committed)
 - [ ] Day 3 browser checks (Step 4: skeletons, 5 cards, 3→2→1 columns, `?q=fan`, chips, URL in new tab, Back button; Step 5: rahim's 2 services, add → toast + on Home, remove → `active = false` in Prisma Studio, new provider hidden until `approved = true`)
 - [ ] Optional: rename the loop's `key` → `name` in `Home.jsx` `updateFilters` (it hides the outer `key`)
-- [ ] Day 4: working hours and slots
+- [ ] Day 4: working hours and slots (Steps 1–3 done; next: Step 4, `routes/providers.js`)
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
