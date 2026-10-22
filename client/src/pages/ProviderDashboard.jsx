@@ -15,6 +15,7 @@ import { api, errorMessage } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { AREAS } from "../constants";
 import { formatTaka } from "../utils/format";
+import HoursEditor from "../components/HoursEditor";
 
 export default function ProviderDashboard() {
   const { user } = useAuth();
@@ -64,7 +65,6 @@ export default function ProviderDashboard() {
   return (
     <div className="grid gap-6">
       <h1 className="text-2xl font-bold tracking-tight">Provider dashboard</h1>
-
       {!user.provider?.approved && (
         <Alert className="border-amber-300 bg-amber-50">
           <Clock />
@@ -76,8 +76,7 @@ export default function ProviderDashboard() {
         </Alert>
       )}
 
-      {/* Day 4: <HoursEditor /> goes here */}
-
+      <HoursEditor />
       <Card>
         <CardHeader>
           <CardTitle>My services</CardTitle>
@@ -115,7 +114,6 @@ export default function ProviderDashboard() {
           </div>
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>Add a service</CardTitle>
