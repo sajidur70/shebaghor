@@ -97,6 +97,14 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Guide note: test #10's body `{"price":1}` gives **400**, not 404, because zod (price ≥ 50) runs before the ownership check. Use a valid price (e.g. 500) to see the 404
 - [x] Didn't re-seed after testing: deleted the new "Socket installation" instead of one of Rahim's, so the demo data is unchanged (one inactive row left over)
 
+### 2026-10-22 — Day 3, Steps 4–5: Home page and provider dashboard
+- [x] **4.1–4.3** `utils/format.js` (`formatTaka`, South-Asian grouping), `components/Stars.jsx`, `components/ServiceCard.jsx`
+- [x] **4.4** `pages/Home.jsx`: search box, area select, category chips, skeletons, empty/error states, pagination; filters live in the URL
+- [x] Fixed the guide's `Home.jsx` lint error (`react-hooks/set-state-in-effect`): each answer is saved with the search it belongs to, and `loading` is worked out from that instead of being stored (see Decisions)
+- [x] **5** `pages/ProviderDashboard.jsx`: my services list with Remove, add-service form with toast, "waiting for approval" alert
+- [x] Checked: `npm run lint` clean, `vite build` passes, code matches the guide
+- [x] Committed and pushed
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -113,8 +121,10 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Day 2, Step 6: router, Navbar, Login, Register, RequireRole
 - [x] Commit Day 2 Steps 5–6: `ef5f0ee`, pushed
 - [x] Day 3, Steps 1–3: categories + services API, tested
-- [ ] Day 3, Step 4: Home page (`format.js`, `Stars.jsx`, `ServiceCard.jsx`, `Home.jsx`)
-- [ ] Day 3, Step 5: provider dashboard (my services + add form)
+- [x] Day 3, Steps 4–5: Home page + provider dashboard (code committed)
+- [ ] Day 3 browser checks (Step 4: skeletons, 5 cards, 3→2→1 columns, `?q=fan`, chips, URL in new tab, Back button; Step 5: rahim's 2 services, add → toast + on Home, remove → `active = false` in Prisma Studio, new provider hidden until `approved = true`)
+- [ ] Optional: rename the loop's `key` → `name` in `Home.jsx` `updateFilters` (it hides the outer `key`)
+- [ ] Day 4: working hours and slots
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -141,6 +151,8 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | Keep Thunder Client 3.0 for API tests | Its sidebar button has two parts: **New Request** makes a normal HTTP request; the ▼ arrow next to it makes SSE / WebSocket / gRPC requests (a tab with a **Connect** button and an empty answer) |
 | `loading` starts from `Boolean(localStorage.getItem("token"))`, not `true` | The newer React lint rule forbids calling `setLoading` straight inside `useEffect` (extra re-render); with no token there's nothing to wait for |
 | `eslint-disable-next-line` above `useAuth` | Vite fast refresh wants component-only files; keeping the hook next to its context is the normal pattern, so the rule is switched off for that one line |
+| `Home.jsx` stores `{ key, result, error }` and works out `loading`, not `setResult(null)` in the effect | Same lint rule as `AuthContext`: changing state straight inside `useEffect` draws the page twice. State only changes in `.then()`; `loading = data.key !== key` |
+| `ignore` flag in the `Home.jsx` search effect | Race condition: if "Tutor" then "Plumber" are clicked fast and the Tutor answer arrives last, the cleanup throws it away |
 | I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
 
 ## Things I learned (interview notes)
@@ -161,4 +173,6 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **`Could not resolve './pages/Home'`:** an `import` points at a file that doesn't exist yet; Vite can't build anything until every imported file exists.
 - **IDOR:** `requireRole("PROVIDER")` only proves "you're a provider", not "this is your service". Putting `providerId: me.id` in the `updateMany` WHERE means Rahim can't touch Jamal's service; he gets 404, which also hides that it exists.
 - **Missing import = hidden bug:** JavaScript only fails when the line actually runs, so a missing `HttpError` import only breaks the rare "no profile" path. Every happy-path test still passes.
+- **Filters in the URL:** `/?q=fan&category=tutor` means a search can be shared as a link and the Back button works; `useSearchParams` reads and writes it.
+- **Race condition in `useEffect`:** two requests can come back in the wrong order; the cleanup function (`return () => { ignore = true }`) marks the old one as out of date.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
