@@ -5,7 +5,8 @@ import morgan from "morgan";
 import { env } from "./config/env.js";
 import { notFound, errorHandler } from "./middleware/error.js";
 import authRoutes from "./routes/auth.js";
-
+import categoryRoutes from "./routes/categories.js";
+import serviceRoutes from "./routes/services.js";
 export const app = express();
 
 app.set("trust proxy", 1); // Render sits behind a proxy; needed for correct client IPs (rate limiting)
@@ -21,5 +22,7 @@ app.get("/api/health", (req, res) => {
 
 // ── Routes are added here on Day 2+ (ABOVE notFound) ──
 app.use("/api/auth", authRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/services", serviceRoutes);
 app.use(notFound);
 app.use(errorHandler);
