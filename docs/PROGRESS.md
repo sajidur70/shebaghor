@@ -123,6 +123,13 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [ ] Step 4 API tests in Thunder Client (Saturday → 17 slots starting `T03:00:00.000Z`; Friday → `[]`; `2026-02-30` → 400)
 - [ ] Step 5–6 browser checks (see Next), then commit `feat: provider working hours and free slot picker`
 
+### 2026-10-22 — Day 5, Steps 1–2: booking API
+- [x] **1** `src/services/booking.js`: `createBooking` checks the service, future time and working hours (BR-2), then in one transaction locks the provider row (`SELECT … FOR UPDATE`), checks for an overlapping blocking booking (409) and inserts it as `PENDING_PAYMENT` with the price snapshot
+- [x] **2** `src/routes/bookings.js`: customer `POST /`, customer/provider `GET /me` (with `holdActive`), customer `PATCH /:id/cancel` (flags `refundRequired` if paid), provider `PATCH /:id/complete` (all rules in the `WHERE`); mounted at `/api/bookings`
+- [x] Tested (17 checks, Saturday 2026-10-24, Fan & light repair): 201 `PENDING_PAYMENT` 500 tk; same again 409; slots 17 → 14; Rahim 403; no token 401; short address, Friday, 7 PM Dhaka, past time all 400; both `/me` lists show it (`holdActive: true`); 5 requests at once for one time → one 201 + four 409; cancel 200, twice 400, time free again; completing a future booking 400
+- [x] Deleted the 2 test bookings afterwards, so the demo data is unchanged
+- [x] Committed `feat: booking endpoint with provider row lock and 15-minute hold`
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -144,7 +151,8 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [ ] Optional: rename the loop's `key` → `name` in `Home.jsx` `updateFilters` (it hides the outer `key`)
 - [ ] Day 4: working hours and slots (all code written; API tests + browser checks left, then commit)
 - [ ] Day 4 browser checks: Rahim sees 7 days (Friday off); a card on Home → details + 14 day buttons; Sat–Thu 9:00 AM … 5:00 PM, Friday "No free times"; today hides past times; Rahim sets Sunday 10:00–13:00 → visitor sees 10:00 AM … 12:00 PM; 90-min service ends at 4:30 PM
-- [ ] Day 5: booking with no double-booking
+- [ ] Day 5: booking with no double-booking (Steps 1–2 done; next: Step 3 `scripts/race.js`, run with and without the lock)
+- [ ] Day 6 note: `/cancel` reads the booking then writes; once payments exist, a payment marked PAID in between would miss `refundRequired`
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -196,4 +204,5 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **Missing import = hidden bug:** JavaScript only fails when the line actually runs, so a missing `HttpError` import only breaks the rare "no profile" path. Every happy-path test still passes.
 - **Filters in the URL:** `/?q=fan&category=tutor` means a search can be shared as a link and the Back button works; `useSearchParams` reads and writes it.
 - **Race condition in `useEffect`:** two requests can come back in the wrong order; the cleanup function (`return () => { ignore = true }`) marks the old one as out of date.
+- **Row lock (`SELECT … FOR UPDATE`):** two customers booking Rahim at the same moment both reach the lock; the second waits until the first commits, then its overlap check sees the new booking and gets 409. Tested: 5 requests at once → exactly one 201.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
