@@ -83,6 +83,12 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] **4** Tested: login 200 + token; wrong password and unknown email both 401 with the same message; provider without area 400; `role: "ADMIN"` 400; `/me` without token 401, with token 200 (no `passwordHash`), with a changed token 401; `test1@mail.com` registered, stored hash starts `$2b$10$`
 - [x] Committed: `bb8e454`
 
+### 2026-10-22 — Day 2, Steps 5–6: frontend auth
+- [x] **5.1** `api.js`: request interceptor adds `Authorization: Bearer <token>` from `localStorage`
+- [x] **5.2** `src/context/AuthContext.jsx`: `user`, `loading`, `login`, `register`, `logout`; on page load checks a saved token with `/auth/me`
+- [x] **6.1–6.8** `constants.js`, `RequireRole.jsx`, `Navbar.jsx`, `Field.jsx`, `Login.jsx`, `Register.jsx`, 6 placeholder pages, router in `App.jsx`
+- [x] Checked: `npm run lint` clean, `vite build` passes; browser test OK (log in, stay logged in after F5, `/admin` blocked for a customer, `/bookings` sends a logged-out user to Login and back, log out)
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -95,8 +101,10 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Step 9 committed and pushed: `8eb84f6`. **Day 1 complete.**
 - [x] Day 2, Steps 1–4: auth API (`bb8e454`)
 - [ ] Day 2, Step 4 leftovers: register `test1@mail.com` again → 409; wrong password ~21 times → 429 (restart the server after)
-- [ ] Day 2, Step 5: `api.js` interceptor + `AuthContext.jsx`
-- [ ] Day 2, Step 6: router, Navbar, Login, Register, RequireRole
+- [x] Day 2, Step 5: `api.js` interceptor + `AuthContext.jsx`
+- [x] Day 2, Step 6: router, Navbar, Login, Register, RequireRole
+- [ ] Commit Day 2 Steps 5–6
+- [ ] Day 3: services and search
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -121,6 +129,8 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | Components import `cn` from the `cn` package | Newer shadcn uses its own `cn` package instead of `clsx` + `tailwind-merge`; `@/lib/utils` re-exports it |
 | ESLint ignores `src/components/ui` | shadcn's generated files trip the Vite lint rules (unused `React` import); my own code is still checked |
 | Keep Thunder Client 3.0 for API tests | Its sidebar button has two parts: **New Request** makes a normal HTTP request; the ▼ arrow next to it makes SSE / WebSocket / gRPC requests (a tab with a **Connect** button and an empty answer) |
+| `loading` starts from `Boolean(localStorage.getItem("token"))`, not `true` | The newer React lint rule forbids calling `setLoading` straight inside `useEffect` (extra re-render); with no token there's nothing to wait for |
+| `eslint-disable-next-line` above `useAuth` | Vite fast refresh wants component-only files; keeping the hook next to its context is the normal pattern, so the rule is switched off for that one line |
 | I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
 
 ## Things I learned (interview notes)
@@ -136,4 +146,7 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **`Network Error` in the browser:** Axios got no response at all (server not running, wrong URL, or CORS blocked it). If the server answers with an error, you see its `{ error }` message instead.
 - **Bearer token:** the login answer's `token` is like a cinema ticket. I show it on later requests as `Authorization: Bearer <token>`; the server checks the signature with `JWT_SECRET`, so a changed token gets 401.
 - **401 vs 403:** 401 = "who are you?" (no or bad token); 403 = "I know you, but you're not allowed" (wrong role).
+- **React Context:** a notice board every component can read with `useAuth()`, instead of passing `user` down through every level as props.
+- **Login is checked by the server, not the browser:** the browser only holds a signed token; `/auth/me` reloads the user from Postgres on every page load.
+- **`Could not resolve './pages/Home'`:** an `import` points at a file that doesn't exist yet; Vite can't build anything until every imported file exists.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
