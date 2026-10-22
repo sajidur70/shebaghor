@@ -110,7 +110,18 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] **2.1** `src/utils/slots.js`: `overlaps` + pure `getFreeSlots` (`now` passed in, no database)
 - [x] **2.2** `src/utils/blocking.js`: `blockingBookingWhere` (Prisma `where` fragment) + `isHoldActive`, 15-minute payment hold
 - [x] **3** `test/slots.test.js`: `npm test` → pass 11, fail 0
-- [ ] "Prove the tests catch bugs" (`aEnd > bStart` → `>=`, see the touching test fail, change back), then commit
+- [ ] "Prove the tests catch bugs" (`aEnd > bStart` → `>=`, see the touching test fail, change back)
+- [x] Committed and pushed: `34684a3`
+
+### 2026-10-22 — Day 4, Steps 4–6: providers API, hours editor, slot picker
+- [x] **4** `src/routes/providers.js`: `GET /me`, `PUT /me/availability` (delete + insert in one transaction), public `GET /:id` and `GET /:id/slots`; mounted at `/api/providers`
+- [x] **5** `components/HoursEditor.jsx` (7 days, checkbox + two time inputs, Save → toast), shown in `ProviderDashboard.jsx`
+- [x] **6.1** `utils/format.js`: `formatTime`, `formatDateTime`, `next14Days`, `dayLabel` (all in `Asia/Dhaka`)
+- [x] **6.2** `pages/ServiceDetail.jsx`: 14 day buttons + free times
+- [x] Fixed the guide's `ServiceDetail.jsx` lint error (`react-hooks/set-state-in-effect`), same way as `Home.jsx`: slots are saved with their date, `slots` is worked out; `setSelected(null)` moved into the day button's `onClick` (see Decisions)
+- [x] Checked: `npm run lint` clean, `vite build` passes, `npm test` 11 pass
+- [ ] Step 4 API tests in Thunder Client (Saturday → 17 slots starting `T03:00:00.000Z`; Friday → `[]`; `2026-02-30` → 400)
+- [ ] Step 5–6 browser checks (see Next), then commit `feat: provider working hours and free slot picker`
 
 ## Next
 
@@ -131,7 +142,9 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Day 3, Steps 4–5: Home page + provider dashboard (code committed)
 - [ ] Day 3 browser checks (Step 4: skeletons, 5 cards, 3→2→1 columns, `?q=fan`, chips, URL in new tab, Back button; Step 5: rahim's 2 services, add → toast + on Home, remove → `active = false` in Prisma Studio, new provider hidden until `approved = true`)
 - [ ] Optional: rename the loop's `key` → `name` in `Home.jsx` `updateFilters` (it hides the outer `key`)
-- [ ] Day 4: working hours and slots (Steps 1–3 done; next: Step 4, `routes/providers.js`)
+- [ ] Day 4: working hours and slots (all code written; API tests + browser checks left, then commit)
+- [ ] Day 4 browser checks: Rahim sees 7 days (Friday off); a card on Home → details + 14 day buttons; Sat–Thu 9:00 AM … 5:00 PM, Friday "No free times"; today hides past times; Rahim sets Sunday 10:00–13:00 → visitor sees 10:00 AM … 12:00 PM; 90-min service ends at 4:30 PM
+- [ ] Day 5: booking with no double-booking
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -159,6 +172,7 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | `loading` starts from `Boolean(localStorage.getItem("token"))`, not `true` | The newer React lint rule forbids calling `setLoading` straight inside `useEffect` (extra re-render); with no token there's nothing to wait for |
 | `eslint-disable-next-line` above `useAuth` | Vite fast refresh wants component-only files; keeping the hook next to its context is the normal pattern, so the rule is switched off for that one line |
 | `Home.jsx` stores `{ key, result, error }` and works out `loading`, not `setResult(null)` in the effect | Same lint rule as `AuthContext`: changing state straight inside `useEffect` draws the page twice. State only changes in `.then()`; `loading = data.key !== key` |
+| `ServiceDetail.jsx` stores `{ date, slots }` and clears `selected` in the day button's `onClick` | Same lint rule again: no `setSlots(null)` / `setSelected(null)` straight inside `useEffect`. Reset state in the event that caused it, not in an effect that watches for it |
 | `ignore` flag in the `Home.jsx` search effect | Race condition: if "Tutor" then "Plumber" are clicked fast and the Tutor answer arrives last, the cleanup throws it away |
 | I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
 
