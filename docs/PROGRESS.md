@@ -89,6 +89,14 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] **6.1–6.8** `constants.js`, `RequireRole.jsx`, `Navbar.jsx`, `Field.jsx`, `Login.jsx`, `Register.jsx`, 6 placeholder pages, router in `App.jsx`
 - [x] Checked: `npm run lint` clean, `vite build` passes; browser test OK (log in, stay logged in after F5, `/admin` blocked for a customer, `/bookings` sends a logged-out user to Login and back, log out)
 
+### 2026-10-22 — Day 3, Steps 1–3: categories and services API
+- [x] **1.1** `src/utils/provider.js`: `getMyProvider(userId)` finds the logged-in provider's profile from the token (fixed a missing `HttpError` import)
+- [x] **1.2** `src/routes/categories.js`: public `GET /`, admin-only `POST /` (makes the slug)
+- [x] **2** `src/routes/services.js`: public search (q / category / area, pages), `GET /mine` (above `/:id`), `GET /:id`, provider `POST`, `PATCH` and soft `DELETE` with the ownership check in the `WHERE`; both routers mounted in `app.js`
+- [x] **3** Tested all 11: 5 services (pending provider hidden), `q=fan`, `category=tutor`, `area=uttara` (lowercase works), `pageSize=2&page=2` → `totalPages: 3`, `page=0` → 400, `/mine` → Rahim's 2, create 201, customer 403, Rahim editing/deleting Jamal's → 404 (price unchanged), delete own → 204 and gone from search. Also: provider `POST /categories` → 403, unknown id → 404
+- [x] Guide note: test #10's body `{"price":1}` gives **400**, not 404, because zod (price ≥ 50) runs before the ownership check. Use a valid price (e.g. 500) to see the 404
+- [x] Didn't re-seed after testing: deleted the new "Socket installation" instead of one of Rahim's, so the demo data is unchanged (one inactive row left over)
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -104,7 +112,9 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Day 2, Step 5: `api.js` interceptor + `AuthContext.jsx`
 - [x] Day 2, Step 6: router, Navbar, Login, Register, RequireRole
 - [x] Commit Day 2 Steps 5–6: `ef5f0ee`, pushed
-- [ ] Day 3: services and search
+- [x] Day 3, Steps 1–3: categories + services API, tested
+- [ ] Day 3, Step 4: Home page (`format.js`, `Stars.jsx`, `ServiceCard.jsx`, `Home.jsx`)
+- [ ] Day 3, Step 5: provider dashboard (my services + add form)
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
 ## Decisions and why
@@ -149,4 +159,6 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **React Context:** a notice board every component can read with `useAuth()`, instead of passing `user` down through every level as props.
 - **Login is checked by the server, not the browser:** the browser only holds a signed token; `/auth/me` reloads the user from Postgres on every page load.
 - **`Could not resolve './pages/Home'`:** an `import` points at a file that doesn't exist yet; Vite can't build anything until every imported file exists.
+- **IDOR:** `requireRole("PROVIDER")` only proves "you're a provider", not "this is your service". Putting `providerId: me.id` in the `updateMany` WHERE means Rahim can't touch Jamal's service; he gets 404, which also hides that it exists.
+- **Missing import = hidden bug:** JavaScript only fails when the line actually runs, so a missing `HttpError` import only breaks the rare "no profile" path. Every happy-path test still passes.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
