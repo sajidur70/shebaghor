@@ -103,7 +103,7 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [ ] Day 2, Step 4 leftovers: register `test1@mail.com` again → 409; wrong password ~21 times → 429 (restart the server after)
 - [x] Day 2, Step 5: `api.js` interceptor + `AuthContext.jsx`
 - [x] Day 2, Step 6: router, Navbar, Login, Register, RequireRole
-- [ ] Commit Day 2 Steps 5–6
+- [x] Commit Day 2 Steps 5–6: `ef5f0ee`, pushed
 - [ ] Day 3: services and search
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
