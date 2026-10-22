@@ -151,7 +151,8 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [ ] Optional: rename the loop's `key` → `name` in `Home.jsx` `updateFilters` (it hides the outer `key`)
 - [ ] Day 4: working hours and slots (all code written; API tests + browser checks left, then commit)
 - [ ] Day 4 browser checks: Rahim sees 7 days (Friday off); a card on Home → details + 14 day buttons; Sat–Thu 9:00 AM … 5:00 PM, Friday "No free times"; today hides past times; Rahim sets Sunday 10:00–13:00 → visitor sees 10:00 AM … 12:00 PM; 90-min service ends at 4:30 PM
-- [ ] Day 5: booking with no double-booking (Steps 1–2 done; next: Step 3 `scripts/race.js`, run with and without the lock)
+- [ ] Day 5: booking with no double-booking (Steps 1–2 done; Step 3 `scripts/race.js` written and committed, matches the guide)
+- [ ] Day 5, Step 3 experiment: run `node scripts/race.js` with the lock (expect 1 created), comment out the `FOR UPDATE` line and run 3+ times (write down the worst), put it back, `npm run db:seed`, then add `## Proof: no double-booking` with my real numbers to the **existing** `README.md` after `## Highlights`
 - [ ] Day 6 note: `/cancel` reads the booking then writes; once payments exist, a payment marked PAID in between would miss `refundRequired`
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
