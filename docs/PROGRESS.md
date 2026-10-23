@@ -130,6 +130,23 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Deleted the 2 test bookings afterwards, so the demo data is unchanged
 - [x] Committed `feat: booking endpoint with provider row lock and 15-minute hold`
 
+### 2026-10-23 — Day 5, Steps 4–5: booking form and My bookings page
+- [x] **4** `pages/ServiceDetail.jsx`: booking form (address, Book button), log-in / customers-only messages, on 409 clears the picked time and reloads the slots
+- [x] Fixed the guide's `ServiceDetail.jsx` lint error (`react-hooks/set-state-in-effect`) again: `loadSlots` no longer resets state; the reset happens in `pickDay` (day button) and in the 409 branch
+- [x] **5** `components/StatusBadge.jsx` (4 statuses, match the `BookingStatus` enum) and `pages/Bookings.jsx` (My bookings / My jobs, Cancel, Mark complete, "hold expired" note)
+- [x] Checked: `eslint src` clean. Committed and pushed: `3559379`
+- [ ] Browser checks (two windows → "slot was just taken"; amber badge; Rahim's My jobs; cancel → grey + slot free; 15-min hold via `createdAt` in Prisma Studio)
+- [ ] Put the `ignore` flag back in `loadSlots` (the guide's Step 4 code dropped it, so a slow answer for an old day can show under the new day)
+
+### 2026-10-23 — Day 6, Part A: payments (Steps 1–3)
+- [x] **1** `src/services/payment.js`: `initPayment` (owner + `PENDING_PAYMENT` + hold checks, new `tranId` per attempt, `upsert` the one Payment row, mock mode confirms at once), `confirmPayment` (idempotent: `PAID` early return + `updateMany … WHERE status = INITIATED`; provider row lock; refund if the slot was taken or the booking cancelled), `markFailed` (guard against `tranId: undefined`)
+- [x] **2** `src/services/sslcommerz.js`: `createSession` and `validatePayment` (sandbox), Node's built-in `fetch`
+- [x] **3** `src/routes/payments.js`: `POST /init/:bookingId` (customer), `/success`, `/fail`, `/cancel`, `/ipn`; mounted at `/api/payments`
+- [x] Tested in mock mode (13 checks): book 201 → init gives `…/payment/success` → `CONFIRMED` + `PAID`, amount = price snapshot; init again 400; no token 401, provider 403, unknown booking 404; fake `/success` (no `val_id`, or a made-up `val_id` with a real `tranId`) → 303 to `/payment/failed` and the database unchanged; `/fail` with no `tran_id` marks nothing FAILED; `/ipn` with a fake `val_id` → 200 and nothing changed
+- [x] Deleted the test booking + payment afterwards, so the demo data is unchanged
+- [x] Committed and pushed: `c1b48c9`
+- [ ] Real SSLCommerz test after deploying (Day 7): needs a public URL for `/success` and `/ipn`
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -153,6 +170,9 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [ ] Day 4 browser checks: Rahim sees 7 days (Friday off); a card on Home → details + 14 day buttons; Sat–Thu 9:00 AM … 5:00 PM, Friday "No free times"; today hides past times; Rahim sets Sunday 10:00–13:00 → visitor sees 10:00 AM … 12:00 PM; 90-min service ends at 4:30 PM
 - [ ] Day 5: booking with no double-booking (Steps 1–2 done; Step 3 `scripts/race.js` written and committed, matches the guide)
 - [ ] Day 5, Step 3 experiment: run `node scripts/race.js` with the lock (expect 1 created), comment out the `FOR UPDATE` line and run 3+ times (write down the worst), put it back, `npm run db:seed`, then add `## Proof: no double-booking` with my real numbers to the **existing** `README.md` after `## Highlights`
+- [x] Day 5, Steps 4–5: booking form + My bookings page (`3559379`; browser checks still to do)
+- [x] Day 6, Part A: payments in mock mode (`c1b48c9`)
+- [ ] **Day 6, Part B: reviews** (Step 4: `Review` model + second migration + CHECK constraint)
 - [ ] Day 6 note: `/cancel` reads the booking then writes; once payments exist, a payment marked PAID in between would miss `refundRequired`
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
@@ -181,7 +201,7 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | `loading` starts from `Boolean(localStorage.getItem("token"))`, not `true` | The newer React lint rule forbids calling `setLoading` straight inside `useEffect` (extra re-render); with no token there's nothing to wait for |
 | `eslint-disable-next-line` above `useAuth` | Vite fast refresh wants component-only files; keeping the hook next to its context is the normal pattern, so the rule is switched off for that one line |
 | `Home.jsx` stores `{ key, result, error }` and works out `loading`, not `setResult(null)` in the effect | Same lint rule as `AuthContext`: changing state straight inside `useEffect` draws the page twice. State only changes in `.then()`; `loading = data.key !== key` |
-| `ServiceDetail.jsx` stores `{ date, slots }` and clears `selected` in the day button's `onClick` | Same lint rule again: no `setSlots(null)` / `setSelected(null)` straight inside `useEffect`. Reset state in the event that caused it, not in an effect that watches for it |
+| `ServiceDetail.jsx` resets `slots` / `selected` in `pickDay` and the 409 branch, not in `loadSlots` | Same lint rule again: `loadSlots` runs inside `useEffect`, so it must only set state in `.then()`. Reset state in the event that caused it (a click, a 409), not in an effect that watches for it |
 | `ignore` flag in the `Home.jsx` search effect | Race condition: if "Tutor" then "Plumber" are clicked fast and the Tutor answer arrives last, the cleanup throws it away |
 | I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
 
