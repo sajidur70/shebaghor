@@ -130,5 +130,30 @@ router.get("/:id/slots", async (req, res) => {
 
   res.json({ date, slots });
 });
+router.get("/:id/reviews", async (req, res) => {
+  const { page } = z
+    .object({ page: z.coerce.number().int().min(1).default(1) })
+    .parse(req.query);
+  const pageSize = 5;
+  const where = { providerId: req.params.id };
+
+  const [reviews, total] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: { customer: { select: { name: true } } },
+    }),
+    prisma.review.count({ where }),
+  ]);
+
+  res.json({
+    reviews,
+    total,
+    page,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  });
+});
 
 export default router;

@@ -43,6 +43,7 @@ router.get(
           include: { user: { select: { name: true, phone: true } } },
         },
         payment: { select: { status: true, refundRequired: true } },
+        review: { select: { id: true, rating: true } },
       },
     });
 
