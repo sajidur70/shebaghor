@@ -147,6 +147,16 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Committed and pushed: `c1b48c9`
 - [ ] Real SSLCommerz test after deploying (Day 7): needs a public URL for `/success` and `/ipn`
 
+### 2026-10-23 — Day 6, Part B: reviews (Steps 4–6)
+- [x] **4** `Review` model (unique `bookingId`, index on `providerId, createdAt`) + back-relations on `User`, `ProviderProfile`, `Booking`; second migration `…_reviews` made with `--create-only`, then the CHECK constraint `Review_rating_range` (1–5) added by hand at the bottom of the SQL
+- [x] First try failed on the shadow database (`P1014: table for model Review does not exist`): the `ALTER TABLE … CHECK` was pasted at the **top**, before `CREATE TABLE`. Moved it to the bottom → applied. Don't edit an applied migration (Prisma keeps a checksum)
+- [x] **5** Seed: `review.deleteMany()` first; demo jobs for Nadia + Rahim (yesterday `CONFIRMED` + paid; last week `COMPLETED` + paid + ★5 review) → Rahim starts at ★5.0 (1)
+- [x] Committed and pushed: `ebba7b4`
+- [x] **6** `services/review.js` (one transaction: review insert + `ratingAvg` / `ratingCount` updated in SQL; P2002 → 409), `routes/reviews.js` (`POST /api/reviews`, customer, zod 1–5), public `GET /api/providers/:id/reviews` (5 per page), `review` included in `GET /bookings/me` (avoids N+1)
+- [x] Tested (15 checks): review before complete 400; Rahim completes yesterday's job 200; no token 401, provider 403, unknown booking 404; rating 9 / 0 / 4.5 → 400; review 201; again 409 and the count stays 2; search card ★4.5 (2); review list newest first with names only; writing rating 9 straight to Postgres is refused by `Review_rating_range`
+- [x] Re-seeded afterwards, so yesterday's job is `CONFIRMED` again for the Part C browser test
+- [x] Committed and pushed: `3262a23`
+
 ## Next
 
 - [x] Commit the server setup: `b52a477`, pushed; `.env` is not tracked (checked with `git ls-files`)
@@ -172,7 +182,8 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [ ] Day 5, Step 3 experiment: run `node scripts/race.js` with the lock (expect 1 created), comment out the `FOR UPDATE` line and run 3+ times (write down the worst), put it back, `npm run db:seed`, then add `## Proof: no double-booking` with my real numbers to the **existing** `README.md` after `## Highlights`
 - [x] Day 5, Steps 4–5: booking form + My bookings page (`3559379`; browser checks still to do)
 - [x] Day 6, Part A: payments in mock mode (`c1b48c9`)
-- [ ] **Day 6, Part B: reviews** (Step 4: `Review` model + second migration + CHECK constraint)
+- [x] Day 6, Part B: reviews (`ebba7b4`, `3262a23`)
+- [ ] **Day 6, Part C: frontend** (Step 7.1 `PaymentResult.jsx`, 7.2 `ReviewList.jsx`, 7.3 final `Bookings.jsx` with Pay + Review)
 - [ ] Day 6 note: `/cancel` reads the booking then writes; once payments exist, a payment marked PAID in between would miss `refundRequired`
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
