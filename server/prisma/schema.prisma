@@ -37,6 +37,7 @@ model User {
   createdAt    DateTime         @default(now())
   provider     ProviderProfile? // only for role = PROVIDER
   bookings     Booking[] // bookings this user made as a customer
+  reviews      Review[] // reviews this customer wrote
 }
 
 model ProviderProfile {
@@ -51,6 +52,7 @@ model ProviderProfile {
   services     Service[]
   availability Availability[]
   bookings     Booking[]
+  reviews      Review[] // reviews about this provider
 }
 
 model Category {
@@ -104,6 +106,7 @@ model Booking {
   status     BookingStatus   @default(PENDING_PAYMENT)
   createdAt  DateTime        @default(now()) // used for the 15-minute payment hold
   payment    Payment?
+  review     Review? // ? = at most one review per booking
 
   @@index([providerId, startAt]) // fast overlap checks
   @@index([customerId])
@@ -120,4 +123,19 @@ model Payment {
   refundRequired Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+}
+
+model Review {
+  id         String          @id @default(cuid())
+  bookingId  String          @unique // one review per booking (BR-8), enforced by the DB
+  booking    Booking         @relation(fields: [bookingId], references: [id])
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  customerId String
+  customer   User            @relation(fields: [customerId], references: [id])
+  rating     Int // 1–5, CHECK constraint added in the SQL below
+  comment    String?
+  createdAt  DateTime        @default(now())
+
+  @@index([providerId, createdAt])
 }

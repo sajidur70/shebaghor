@@ -100,6 +100,8 @@ const PROVIDERS = [
 
 async function main() {
   // 1. Wipe. Children first, because of foreign keys.
+  await prisma.review.deleteMany(); // reviews point at bookings, so they go first
+
   await prisma.payment.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.availability.deleteMany();
@@ -173,7 +175,73 @@ async function main() {
       },
     });
   }
+  // ── Demo jobs so "Mark complete" and "Review" can be tested right away ──
+  const nadia = await prisma.user.findUnique({
+    where: { email: "customer@shebaghor.dev" },
+  });
+  const rahim = await prisma.providerProfile.findFirst({
+    where: { user: { email: "rahim@shebaghor.dev" } },
+    include: { services: true },
+  });
+  const fan = rahim.services.find((s) => s.title === "Fan & light repair");
+  const hoursAgo = (h) => new Date(Date.now() - h * 3_600_000);
 
+  // 1) Yesterday, paid and CONFIRMED → Rahim can "Mark complete", then Nadia can review it.
+  await prisma.booking.create({
+    data: {
+      customerId: nadia.id,
+      providerId: rahim.id,
+      serviceId: fan.id,
+      startAt: hoursAgo(26),
+      endAt: hoursAgo(25),
+      price: fan.price,
+      address: "House 12, Road 3, Mirpur 10",
+      status: "CONFIRMED",
+      payment: {
+        create: {
+          tranId: "SEED-1",
+          amount: fan.price,
+          status: "PAID",
+          valId: "SEED",
+        },
+      },
+    },
+  });
+
+  // 2) Last week, COMPLETED and already reviewed → Rahim starts with ★5.0 (1).
+  const oldJob = await prisma.booking.create({
+    data: {
+      customerId: nadia.id,
+      providerId: rahim.id,
+      serviceId: fan.id,
+      startAt: hoursAgo(24 * 7),
+      endAt: hoursAgo(24 * 7 - 1),
+      price: fan.price,
+      address: "House 12, Road 3, Mirpur 10",
+      status: "COMPLETED",
+      payment: {
+        create: {
+          tranId: "SEED-2",
+          amount: fan.price,
+          status: "PAID",
+          valId: "SEED",
+        },
+      },
+    },
+  });
+  await prisma.review.create({
+    data: {
+      bookingId: oldJob.id,
+      customerId: nadia.id,
+      providerId: rahim.id,
+      rating: 5,
+      comment: "Fixed my fan in 20 minutes. Very polite!",
+    },
+  });
+  await prisma.providerProfile.update({
+    where: { id: rahim.id },
+    data: { ratingAvg: 5, ratingCount: 1 },
+  });
   console.log("🌱 Seed complete. All demo passwords: password123");
 }
 
