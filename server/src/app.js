@@ -9,6 +9,7 @@ import categoryRoutes from "./routes/categories.js";
 import serviceRoutes from "./routes/services.js";
 import providerRoutes from "./routes/providers.js";
 import bookingRoutes from "./routes/bookings.js";
+import paymentRoutes from "./routes/payments.js";
 export const app = express();
 
 app.set("trust proxy", 1); // Render sits behind a proxy; needed for correct client IPs (rate limiting)
@@ -28,5 +29,6 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/providers", providerRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use(notFound);
 app.use(errorHandler);
