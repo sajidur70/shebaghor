@@ -74,7 +74,29 @@ export default function Login() {
             {busy ? "Logging in…" : "Log in"}
           </Button>
         </form>
-        {/* Day 7: demo login buttons go here */}
+        <div className="mt-6 rounded-lg border bg-muted/50 p-3">
+          <p className="mb-2 text-sm text-muted-foreground">
+            Try a demo account:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              ["Customer", "customer@shebaghor.dev"],
+              ["Provider", "rahim@shebaghor.dev"],
+              ["Admin", "admin@shebaghor.dev"],
+            ].map(([label, email]) => (
+              <Button
+                key={email}
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={busy}
+                onClick={() => doLogin(email, "password123")}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </div>
       </CardContent>
       <CardFooter className="text-muted-foreground">
         No account?&nbsp;

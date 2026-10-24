@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "./context/AuthContext";
+import WakeBanner from "./components/WakeBanner";
 import Navbar from "./components/Navbar";
 import RequireRole from "./components/RequireRole";
 import Home from "./pages/Home";
@@ -17,6 +18,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <div className="min-h-svh bg-muted/40">
+          <WakeBanner />
           <Navbar />
           <main className="mx-auto max-w-5xl px-4 py-6">
             <Routes>
