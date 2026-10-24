@@ -21,8 +21,9 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | Git | ✅ Set up | Name `Sajidur Rahman`, default branch `main` |
 | GitHub | ✅ Repo `sajidur70/shebaghor` created and pushed | Public |
 | Neon (database) | ✅ Account (login with GitHub), project `shebaghor` created | Only **Postgres database** turned on. Region: **AWS Asia Pacific (Singapore)**, the closest to Dhaka. **Pick Singapore on Render too.** Pooled + direct URLs not yet copied into `server/.env` |
-| Render (backend hosting) | ✅ Account + personal workspace | Web service not created yet (that's Day 7 / roadmap 10.1) |
-| SSLCommerz (payments) | ⏳ Sandbox registration started | Domain `https://shebaghor.vercel.app`, business name `ShebaGhor`. Store ID + password arrive by email → later go in `server/.env` |
+| Render (backend hosting) | ✅ Web service `shebaghor-api` live: https://shebaghor-api.onrender.com | Singapore, Free plan, root `server`, build `npm install --include=dev && npm run build`, start `npm start`. Env vars: `NODE_ENV`, `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `CLIENT_URL`, `SERVER_URL`, `PAYMENT_MODE` (no `PORT`: Render sets it). Redeploys on every push to `main` |
+| Vercel (frontend hosting) | ✅ Live: https://shebaghor-sajidur.vercel.app | Root `client`, Vite preset, `VITE_API_URL` = `https://shebaghor-api.onrender.com/api`. Renamed from `shebaghor-bice.vercel.app`. Redeploys on every push to `main` |
+| SSLCommerz (payments) | ⏳ Sandbox registration started | Domain `https://shebaghor.vercel.app`, business name `ShebaGhor`. **Change the domain to `https://shebaghor-sajidur.vercel.app` before Day 7 Step 6.** Store ID + password arrive by email → go in Render's Environment (and `server/.env`) |
 
 > Secrets (database URLs, store passwords, JWT secret) never go in this file or in git. They live only in `server/.env`.
 
@@ -145,7 +146,7 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Tested in mock mode (13 checks): book 201 → init gives `…/payment/success` → `CONFIRMED` + `PAID`, amount = price snapshot; init again 400; no token 401, provider 403, unknown booking 404; fake `/success` (no `val_id`, or a made-up `val_id` with a real `tranId`) → 303 to `/payment/failed` and the database unchanged; `/fail` with no `tran_id` marks nothing FAILED; `/ipn` with a fake `val_id` → 200 and nothing changed
 - [x] Deleted the test booking + payment afterwards, so the demo data is unchanged
 - [x] Committed and pushed: `c1b48c9`
-- [ ] Real SSLCommerz test after deploying (Day 7): needs a public URL for `/success` and `/ipn`
+- [ ] Real SSLCommerz test after deploying: skipped for now (Day 7 Step 6 is optional), see Next
 
 ### 2026-10-23 — Day 6, Part B: reviews (Steps 4–6)
 - [x] **4** `Review` model (unique `bookingId`, index on `providerId, createdAt`) + back-relations on `User`, `ProviderProfile`, `Booking`; second migration `…_reviews` made with `--create-only`, then the CHECK constraint `Review_rating_range` (1–5) added by hand at the bottom of the SQL
@@ -156,6 +157,29 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Tested (15 checks): review before complete 400; Rahim completes yesterday's job 200; no token 401, provider 403, unknown booking 404; rating 9 / 0 / 4.5 → 400; review 201; again 409 and the count stays 2; search card ★4.5 (2); review list newest first with names only; writing rating 9 straight to Postgres is refused by `Review_rating_range`
 - [x] Re-seeded afterwards, so yesterday's job is `CONFIRMED` again for the Part C browser test
 - [x] Committed and pushed: `3262a23`
+
+### 2026-10-24 — Day 6, Part C: payments and reviews UI (Step 7)
+- [x] **7.1** `pages/PaymentResult.jsx`: success / refund / failed / cancelled messages (unknown → failed)
+- [x] **7.2** `components/ReviewList.jsx` (5 per page, ← → buttons), shown under the last card in `ServiceDetail.jsx`
+- [x] **7.3** Final `pages/Bookings.jsx`: **Pay** button (only while `holdActive`), **Write a review** with a 5-star picker, "You rated ★…", "💸 Refund pending"
+- [x] Fixed the guide's `Bookings.jsx` lint error (`react-hooks/immutability`): `window.location.href = data.url` → `window.location.assign(data.url)` (see Decisions)
+- [x] Checked: `eslint src` clean, `vite build` passes. Committed and pushed: `f3542ef`, `a1b5d46`
+- [ ] Browser journey: book → Pay ৳500 → "✅ Payment successful" → Confirmed; Rahim marks yesterday's job complete; customer reviews 4★ → "You rated ★★★★"; Home shows Rahim **★ 4.5 (2)**; service page lists both reviews; cancel a paid booking → "Refund pending". Re-seed after
+
+### 2026-10-24 — Day 7, Steps 1–2: admin
+- [x] **1** `src/routes/admin.js`: `router.use(requireAuth, requireRole("ADMIN"))` once for the whole file; `GET /stats` (5 queries at once with `Promise.all`: `groupBy` users by role and bookings by status, `aggregate` revenue, pending provider count, refunds list); `GET /providers?approved=`; `PATCH /providers/:id/approve` (unknown id → Prisma `P2025` → 404 in `error.js`). Mounted at `/api/admin`, **before** `notFound`. Committed: `e220718`
+- [x] **2** `pages/AdminDashboard.jsx`: 6 stat tiles, providers waiting (Approve), approved providers (Suspend), refunds to process, add a category. Committed: `6257eca`
+- [ ] Step 1 API checks: `/api/admin/stats` admin 200, customer 403, no token 401
+- [ ] Step 2 browser checks: `pending@` sees "waiting for approval"; "Switchboard installation" hidden on Home → admin approves Karim → it shows; add "Painter" → chip on Home. Re-seed after
+
+### 2026-10-24 — Day 7, Steps 3–5: deployed 🚀
+- [x] **3.1** `client/vercel.json`: sends every path to `index.html` so refreshing `/bookings` isn't a 404. Committed: `4954d4e`
+- [x] **3.2** `npm run build` passes; **3.3** laptop and Render share the same Neon database
+- [x] **4** Render: GitHub access given to the `shebaghor` repo only; 7 env vars typed in one by one (no quotes, no `PORT`), **new** `JWT_SECRET`. Deploy log: Node 26.12.1, Prisma Client generated, "2 migrations found … No pending migrations to apply", `✅ Postgres connected`, running on port 10000
+- [x] **5** Vercel: root `client`, `VITE_API_URL` set before the first build; domain renamed to `shebaghor-sajidur.vercel.app`; then `CLIENT_URL` on Render changed to `https://shebaghor-sajidur.vercel.app` (no `/` at the end)
+- [x] Checked from outside with `curl`: `/api/health` → `{"ok":true}`; search returns 5 services; CORS answers `access-control-allow-origin: https://shebaghor-sajidur.vercel.app`; `/`, `/bookings`, `/payment/success` on Vercel → 200 (rewrite works); the built JavaScript calls the Render API, no `localhost` left
+- [ ] Live-site browser checks: Home loads (first load can take ~60 s, Render wakes up); customer books + mock pay → Confirmed; F5 on `/bookings`; admin dashboard loads; phone on mobile data. Re-seed after (same database as the laptop)
+- [ ] Optional: Render **Settings → Health Check Path** = `/api/health` (stops the harmless `HEAD / 404` lines); remove the old `shebaghor-bice.vercel.app` domain
 
 ## Next
 
@@ -183,7 +207,12 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - [x] Day 5, Steps 4–5: booking form + My bookings page (`3559379`; browser checks still to do)
 - [x] Day 6, Part A: payments in mock mode (`c1b48c9`)
 - [x] Day 6, Part B: reviews (`ebba7b4`, `3262a23`)
-- [ ] **Day 6, Part C: frontend** (Step 7.1 `PaymentResult.jsx`, 7.2 `ReviewList.jsx`, 7.3 final `Bookings.jsx` with Pay + Review)
+- [x] Day 6, Part C: frontend (`f3542ef`, `a1b5d46`; browser journey still to do)
+- [x] Day 7, Steps 1–2: admin API + dashboard (`e220718`, `6257eca`; checks still to do)
+- [x] Day 7, Steps 3–5: live on Render + Vercel (`4954d4e`; live-site browser checks still to do)
+- [x] Day 7, Step 6 (optional): real SSLCommerz sandbox **skipped**; the live site stays on `PAYMENT_MODE=mock` (see Decisions). If I come back to it: change the SSLCommerz domain to `shebaghor-sajidur.vercel.app`; on Render set `PAYMENT_MODE=sslcommerz`, `SSLC_STORE_ID`, `SSLC_STORE_PASSWORD`; pay with a sandbox test card → Render logs show both `/api/payments/success` and `/api/payments/ipn`, booking confirmed once
+- [ ] Day 7, Step 7: polish (demo login buttons, `WakeBanner.jsx` for the cold start, loading / empty / error states on every page, mobile check, clean up)
+- [ ] Day 7, Step 8: README (live link, screenshots, run locally); final acceptance test on the live site, incl. `scripts/race.js` against production, then `npm run db:seed`
 - [ ] Day 6 note: `/cancel` reads the booking then writes; once payments exist, a payment marked PAID in between would miss `refundRequired`
 - [x] Made `shebaghor-docs` public so Claude can check steps against the guide
 
@@ -215,6 +244,14 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 | `ServiceDetail.jsx` resets `slots` / `selected` in `pickDay` and the 409 branch, not in `loadSlots` | Same lint rule again: `loadSlots` runs inside `useEffect`, so it must only set state in `.then()`. Reset state in the event that caused it (a click, a 409), not in an effect that watches for it |
 | `ignore` flag in the `Home.jsx` search effect | Race condition: if "Tutor" then "Plumber" are clicked fast and the Tutor answer arrives last, the cleanup throws it away |
 | I run installs and setup commands myself | I'm learning by doing each step by hand; Claude explains and gives the commands |
+| `window.location.assign(url)` instead of `window.location.href = url` (Pay button) | The newer React lint rule `react-hooks/immutability` forbids a component changing a value it doesn't own, like the browser's global `window.location`. Calling the method does the same full-page redirect |
+| A new `JWT_SECRET` on Render, not the laptop's | Someone who saw my laptop's `.env` still can't make tokens for the live site. Side effect: tokens from before the change don't work there, so "every request is 401" on the live site → log out and log in again |
+| One Neon database for the laptop and Render | Simple for a portfolio project. In a real job production gets its own database (e.g. a Neon branch). Re-seed after testing on the live site |
+| Render env vars typed one by one, not "Add from .env" | That button would also copy the laptop's `PORT`, `NODE_ENV=development`, `localhost` `SERVER_URL` and the old `JWT_SECRET`. No quotes: Render keeps them as part of the value (→ `P1013`) |
+| Render and Vercel get GitHub access to `shebaghor` only | Least privilege: they only need the one repo |
+| Leave the 4 "high severity" `npm audit` warnings | All in the Prisma toolchain (`prisma` → `@prisma/config` → `deepmerge-ts`); the only fix is Prisma 8, a breaking upgrade. Never run `npm audit fix --force` here |
+| Skipped the real SSLCommerz sandbox (Day 7 Step 6); live site uses mock payments | Optional step. The SSLCommerz code (`sslcommerz.js`, `/success`, `/ipn`, idempotent `confirmPayment`) is written and the fake-callback tests pass in mock mode; switching on is only 3 env vars on Render. Honest interview answer: "built and tested with a mock; the gateway switch is config" |
+| `"node": ">=22"` → Render picked Node 26.12.1 | My laptop has 26.8.1, the same major version, so it behaves the same. Could pin an exact major later |
 
 ## Things I learned (interview notes)
 
@@ -238,3 +275,12 @@ To get the guides back locally: `git clone https://github.com/sajidur70/shebagho
 - **Race condition in `useEffect`:** two requests can come back in the wrong order; the cleanup function (`return () => { ignore = true }`) marks the old one as out of date.
 - **Row lock (`SELECT … FOR UPDATE`):** two customers booking Rahim at the same moment both reach the lock; the second waits until the first commits, then its overlap check sees the new booking and gets 409. Tested: 5 requests at once → exactly one 201.
 - **Leaked secrets:** if `.env` is ever pushed, deleting it isn't enough (it stays in history), so rotate the keys immediately.
+- **`groupBy` / `aggregate`:** Prisma's `GROUP BY` and `SUM`; the admin stats run 5 independent queries together with `Promise.all` instead of one after another.
+- **Route order in Express:** `app.use` lines run top to bottom, so `/api/admin` must come before `notFound`, which catches everything left.
+- **CORS is an exact match:** the browser sends `Origin: https://shebaghor-sajidur.vercel.app` and the API answers with `CLIENT_URL`; the browser compares them letter by letter, so one extra `/` blocks every request (`Network Error`). The server says who's allowed; the browser does the blocking.
+- **Vite env vars are baked in at build time:** `VITE_API_URL` is written into the JavaScript when Vercel builds, so after changing it I must **Redeploy**.
+- **SPA rewrite:** React Router pages like `/bookings` aren't real files on Vercel; `vercel.json` sends every path to `index.html` and React Router takes over.
+- **`migrate deploy` vs `migrate dev`:** `deploy` (in Render's build) only applies committed migrations that haven't run yet and never resets data; `dev` is for my laptop only.
+- **`--include=dev` on Render:** `NODE_ENV=production` makes `npm install` skip devDependencies, and the `prisma` CLI is one, so without the flag the build fails with `prisma: not found`.
+- **Cold start:** Render's free plan sleeps after ~15 min idle, so the first request can take ~60 s. `HEAD / 404` in the log is Render checking the service; my API has nothing at `/`.
+- **Vercel URLs:** `shebaghor-<random>-….vercel.app` is one deployment; the project domain (`shebaghor-sajidur.vercel.app`) always shows the latest. Put the domain on the CV.
