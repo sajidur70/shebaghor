@@ -15,6 +15,8 @@ import Field from "../components/Field";
 import { api, errorMessage } from "../api";
 import { useAuth } from "../context/AuthContext";
 import Stars from "../components/Stars";
+import ReviewList from "../components/ReviewList";
+
 import { formatTaka, formatTime, next14Days, dayLabel } from "../utils/format";
 
 export default function ServiceDetail() {
@@ -206,6 +208,7 @@ export default function ServiceDetail() {
           )}
         </CardContent>
       </Card>
+      <ReviewList providerId={service.providerId} />
     </div>
   );
 }
