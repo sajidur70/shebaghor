@@ -1,58 +1,78 @@
 # ShebaGhor
 
-Book trusted home-service professionals in Dhaka (electricians, plumbers, AC technicians, tutors) for a real free time slot, pay online, and review the job afterwards.
+Book electricians, plumbers, AC technicians and tutors in Dhaka. Customers see real free time slots,
+pay (SSLCommerz sandbox integration; the live demo uses mock payments), and review the job afterwards.
+Providers manage their services and hours; an admin approves new providers.
 
-> 🚧 **Work in progress.** Built step by step; the live link, demo logins and screenshots will be added when it's deployed.
+**Live demo:** https://shebaghor-sajidur.vercel.app · **API:** https://shebaghor-api.onrender.com/api/health
 
-## Features (planned for v1)
+| Demo account | Email                  | Password    |
+| ------------ | ---------------------- | ----------- |
+| Customer     | customer@shebaghor.dev | password123 |
+| Provider     | rahim@shebaghor.dev    | password123 |
+| Admin        | admin@shebaghor.dev    | password123 |
 
-**Customers**
-- Search services by keyword, category and area
-- See only the time slots a provider is actually free
-- Book, pay online (SSLCommerz sandbox) and cancel
-- Rate and review completed jobs
+> The API runs on Render's free tier and sleeps when idle, so the first request can take ~60 seconds.
 
-**Providers**
-- Register and wait for admin approval
-- Manage their own services and weekly working hours
-- See their bookings and mark jobs complete
-
-**Admins**
-- Approve or reject providers
-- Manage service categories
-- See platform stats (users, bookings, revenue, refunds)
-
-## Highlights
-
-- **No double-booking**, even when two customers click "Book" at the same moment (row locking inside a Postgres transaction)
-- **15-minute payment hold** on a slot, with no background job needed
-- **Server-side payment verification**: a booking is confirmed only after the server checks the payment with SSLCommerz
-- **Price snapshot**: a booking keeps the price agreed at booking time
-- All times handled in **Asia/Dhaka (UTC+6)**
+![ShebaGhor home page](docs/shebaghor-home.png)
 
 ## Tech stack
 
-| Layer | Technology | Hosting (free tier) |
-|---|---|---|
-| Frontend | React, Tailwind CSS, shadcn/ui | Vercel |
-| Backend | Node.js, Express | Render |
-| Database | PostgreSQL, Prisma | Neon |
-| Payments | SSLCommerz (sandbox) | — |
+| Layer    | Tech                                                         | Hosted on (free) |
+| -------- | ------------------------------------------------------------ | ---------------- |
+| Frontend | React 19, Vite, React Router, Axios, Tailwind CSS, shadcn/ui | Vercel           |
+| Backend  | Node.js, Express 5, Zod, JWT                                 | Render           |
+| Database | PostgreSQL + Prisma                                          | Neon             |
+| Payments | SSLCommerz sandbox + mock mode (live demo: mock)             | —                |
 
-## Project structure
+## Highlights
 
-```text
-shebaghor/
-├── client/   # React frontend
-├── server/   # Express API + Prisma
-└── docs/     # Requirements and data model
+- **No double-booking under concurrency.** Booking runs in a transaction that locks the provider's row
+  (`SELECT … FOR UPDATE`) and then checks for overlaps. 5 concurrent requests for one slot:
+  **with the lock → 1 booking**.
+- **Payment hold without a cron job.** Unpaid bookings block a slot for 15 minutes only.
+- **Payments verified server-to-server**, with idempotent confirmation (redirect + IPN both safe).
+- **Reviews + rating in one transaction**, with a unique `bookingId` and `CHECK (rating BETWEEN 1 AND 5)`.
+- **Timezone-correct:** stored in UTC, shown in Asia/Dhaka; slot logic is a pure function with unit tests.
+
+## Run locally
+
+**Requirements:** Node 22+ and a free Neon Postgres database.
+
+```bash
+# 1. Backend
+cd server
+cp .env.example .env          # paste your Neon connection strings
+npm install
+npx prisma migrate deploy     # creates the tables from the committed migrations
+npm run db:seed               # demo users, providers, services, reviews
+npm run dev                   # http://localhost:5000/api/health
+
+# 2. Frontend (new terminal)
+cd client
+cp .env.example .env
+npm install
+npm run dev                   # http://localhost:5173
 ```
+
+`PAYMENT_MODE=mock` (default) confirms payments instantly, so you can demo without gateway keys.
+
+**Unit tests:** `cd server && npm test`
+
+### Neon connection strings
+
+In the Neon dashboard → **Connect**, copy two URLs into `server/.env`:
+
+- `DATABASE_URL` → the **pooled** one (host contains `-pooler`), add `&pgbouncer=true`
+- `DIRECT_URL` → the **direct** one (used only by `prisma migrate`)
 
 ## Docs
 
 - [Requirements (user stories)](docs/requirements.md)
-- [Data model](docs/data-model.md)
+- [Data model (8 tables)](docs/data-model.md)
+- [Progress log and decisions](docs/PROGRESS.md)
 
-## Run locally
+## What I'd do next
 
-Coming soon.
+Automatic refunds, email notifications, a Postgres exclusion constraint as a DB-level safety net,
+full-text search, integration tests with Supertest.
