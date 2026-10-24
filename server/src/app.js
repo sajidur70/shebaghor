@@ -11,7 +11,7 @@ import providerRoutes from "./routes/providers.js";
 import bookingRoutes from "./routes/bookings.js";
 import paymentRoutes from "./routes/payments.js";
 import reviewRoutes from "./routes/reviews.js";
-
+import adminRoutes from "./routes/admin.js";
 export const app = express();
 
 app.set("trust proxy", 1); // Render sits behind a proxy; needed for correct client IPs (rate limiting)
@@ -33,5 +33,6 @@ app.use("/api/providers", providerRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/admin", adminRoutes);
 app.use(notFound);
 app.use(errorHandler);
